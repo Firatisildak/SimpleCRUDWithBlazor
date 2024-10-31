@@ -4,31 +4,38 @@
 @using SimpleCRUD.ViewModels
 @using SimpleCRUD.Services
 @inject EmployeeService EmployeeService
+@inject IDialogService DialogService
 
 @rendermode InteractiveServer
-
-
 <PageTitle>Home</PageTitle>
 
+<h2 class="text-center">
+    Employee Management System
+</h2>
 
-
-<MudDataGrid T="EmployeeViewModel" MultiSelection="true" Items="@EmployeeViewModel" SortMode="SortMode.Multiple" Filterable="true" QuickFilter="@_quickFilter"
+<MudDataGrid @ref="dataGrid" T="EmployeeViewModel" MultiSelection="true" Items="@EmployeeViewModel" SortMode="SortMode.Multiple" Filterable="true" QuickFilter="@_quickFilter"
              Hideable="true" RowClick="@RowClicked" RowContextMenuClick="RowRightClicked" SelectedItemsChanged="@SelectedItemsChanged">
     <ToolBarContent>
-        <MudText Typo="Typo.h6">Employee Management System</MudText>
+
+        <MudButton Class="me-2"
+                   @onclick="CreateNewUser"
+                   StartIcon="@Icons.Material.Filled.PersonAddAlt1"
+                   Variant="Variant.Filled"
+                   Color="Color.Primary">
+                   Add New Employee
+        </MudButton>
         <MudSpacer />
         <MudTextField @bind-Value="_searchString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
                       AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
     </ToolBarContent>
     <Columns>
         <SelectColumn T="EmployeeViewModel" />
-        <PropertyColumn Property="x => x.EmployeeIdView" Title="Employee Id"/>
+        <PropertyColumn Property="x => x.EmployeeIdView" Title="Employee Id" />
         <PropertyColumn Property="x => x.FullName" Title="Full Name" />
-        <PropertyColumn Property="x => x.Department"/>
+        <PropertyColumn Property="x => x.Department" />
         <PropertyColumn Property="x => x.DateOfBirth" Format="dd MMM yyyy" Title="Date Of Birth" />
-        <PropertyColumn Property="x => x.Age"/>
-        <PropertyColumn Property="x => x.PhoneNumber"/>
-       
+        <PropertyColumn Property="x => x.Age" />
+        <PropertyColumn Property="x => x.PhoneNumber" />
     </Columns>
     <PagerContent>
         <MudDataGridPager T="EmployeeViewModel" />
@@ -57,6 +64,7 @@
 
 @code {
     private IEnumerable<EmployeeViewModel> EmployeeViewModel = new List<EmployeeViewModel>();
+    MudDataGrid<EmployeeViewModel>? dataGrid;
     private string _searchString;
     private bool _sortNameByLength;
     private List<string> _events = new();
@@ -81,13 +89,20 @@
 
         return false;
     };
+    private async Task CreateNewUser()
+    {
+        var options = new DialogOptions { MaxWidth = MaxWidth.Large };
 
+        var dialog = await DialogService.ShowAsync<CreateorUpdateEmployee>("Add Employee", options);
+        var result = await dialog.Result;
+        if (result is not null && !result.Canceled)
+            await dataGrid.ReloadServerData();
+    }
     protected override async Task OnInitializedAsync()
     {
         EmployeeViewModel = await EmployeeService.GetAllEmployees();
     }
 
-    // events
     void RowClicked(DataGridRowClickEventArgs<EmployeeViewModel> args)
     {
         _events.Insert(0, $"Event = RowClick, Index = {args.RowIndex}, Data = {System.Text.Json.JsonSerializer.Serialize(args.Item)}");
@@ -102,4 +117,5 @@
     {
         _events.Insert(0, $"Event = SelectedItemsChanged, Data = {System.Text.Json.JsonSerializer.Serialize(items)}");
     }
-}.
+
+}

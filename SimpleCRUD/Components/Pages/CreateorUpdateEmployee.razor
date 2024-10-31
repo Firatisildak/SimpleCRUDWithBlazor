@@ -1,0 +1,74 @@
+﻿@using SimpleCRUD.Services
+@using SimpleCRUD.ViewModels
+
+@inject EmployeeService EmployeeService
+@inject ISnackbar SnackBar
+
+<EditForm Model="@model" OnValidSubmit="OnvalidSubmit">
+    <MudDialog>
+        <DialogContent>
+            <DataAnnotationsValidator />
+            <MudGrid Class="mb-5">
+                <MudItem xs="9">
+                    <MudTextField Variant="Variant.Outlined"
+                                  ShrinkLabel
+                                  Label="Full Name"
+                                  @bind-Value="model.FullName"
+                                  For="@(() => model.FullName)" />
+                </MudItem>
+                <MudItem xs="3">
+                    <MudTextField Variant="Variant.Outlined"
+                                  ShrinkLabel
+                                  Label="Age"
+                                  @bind-Value="model.Age"
+                                  For="@(() => model.Age)" />
+                </MudItem>
+            </MudGrid>
+            <MudDatePicker Class="mb-5" Variant="Variant.Outlined" Label="Date of Birth" @bind-Date="_date" />
+            <MudTextField Class="mb-5" Variant="Variant.Outlined"
+                          ShrinkLabel
+                          Label="Department"
+                          @bind-Value="model.Department"
+                          For="@(() => model.Department)" />
+            <MudTextField Variant="Variant.Outlined"
+                          ShrinkLabel
+                          Label="Phone Number"
+                          @bind-Value="model.PhoneNumber"
+                          For="@(() => model.PhoneNumber)" />
+        </DialogContent>
+        <DialogActions>
+            <MudButton OnClick="Cancel">Cancel</MudButton>
+            <MudButton ButtonType="ButtonType.Submit" Color="Color.Primary">Save</MudButton>
+        </DialogActions>
+    </MudDialog>
+</EditForm>
+
+@code {
+    [CascadingParameter]
+    private MudDialogInstance MudDialog { get; set; }
+    public DateTime? _date { get; set; } = DateTime.Today;
+    public EmployeeViewModel model { get; set; } = new EmployeeViewModel();
+
+    private async Task OnvalidSubmit(EditContext editContext)
+    {
+        if(_date is not null)
+        {
+            model.DateOfBirth = _date.Value;
+        }
+
+        var result = EmployeeService.CreateNewEmployee(model);
+        if (result)
+        {
+            SnackBar.Add("Successfully create the employe!", Severity.Success);
+            MudDialog.Close();
+        }
+        else
+        {
+            SnackBar.Add("Failed create the employee!", Severity.Error);
+        }
+    }
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+}
