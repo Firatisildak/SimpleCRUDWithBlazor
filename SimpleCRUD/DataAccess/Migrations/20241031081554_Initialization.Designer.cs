@@ -12,7 +12,7 @@ using SimpleCRUD.DataAccess;
 namespace SimpleCRUD.DataAccess.Migrations
 {
     [DbContext(typeof(AppDBContext))]
-    [Migration("20241031065135_Initialization")]
+    [Migration("20241031081554_Initialization")]
     partial class Initialization
     {
         /// <inheritdoc />
@@ -47,8 +47,9 @@ namespace SimpleCRUD.DataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("PhoneNumber")
-                        .HasColumnType("int");
+                    b.Property<string>("PhoneNumber")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("EmployeeId");
 

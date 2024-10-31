@@ -13,6 +13,7 @@ namespace SimpleCRUD.DataAccess
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+            modelBuilder.GenerateSeed();
         }
     }
 }

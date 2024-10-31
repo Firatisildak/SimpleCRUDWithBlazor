@@ -21,7 +21,7 @@ namespace SimpleCRUD.DataAccess.Migrations
                     Department = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     DateOfBirth = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Age = table.Column<int>(type: "int", nullable: false),
-                    PhoneNumber = table.Column<int>(type: "int", nullable: false)
+                    PhoneNumber = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
                 {
