@@ -22,7 +22,7 @@
                    StartIcon="@Icons.Material.Filled.PersonAddAlt1"
                    Variant="Variant.Filled"
                    Color="Color.Primary">
-                   Add New Employee
+            Add New Employee
         </MudButton>
         <MudSpacer />
         <MudTextField @bind-Value="_searchString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
@@ -36,6 +36,25 @@
         <PropertyColumn Property="x => x.DateOfBirth" Format="dd MMM yyyy" Title="Date Of Birth" />
         <PropertyColumn Property="x => x.Age" />
         <PropertyColumn Property="x => x.PhoneNumber" />
+        <TemplateColumn CellClass="d-flex justify-end">
+            <CellTemplate>
+                <MudButton Class="me-2"
+                           Size="@Size.Small"
+                           Variant="Variant.Filled"
+                           StartIcon="@Icons.Material.Filled.Edit"
+                           Color="@Color.Warning"
+                           OnClick="@(() => this.UpdateEmployee(context))">
+                           Update
+                </MudButton>
+                <MudButton Size="@Size.Small"
+                           Variant="Variant.Filled"
+                           StartIcon="@Icons.Material.Filled.Delete"
+                           Color="@Color.Warning"
+                           OnClick="@(() => this.RemoveEmployee(context))">
+                    Remove
+                </MudButton>
+            </CellTemplate>
+        </TemplateColumn>
     </Columns>
     <PagerContent>
         <MudDataGridPager T="EmployeeViewModel" />
