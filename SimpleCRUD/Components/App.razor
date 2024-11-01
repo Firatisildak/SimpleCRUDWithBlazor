@@ -18,7 +18,15 @@
     <Routes />
     <script src="_framework/blazor.web.js"></script>
     <script src="_content/MudBlazor/MudBlazor.min.js"></script>
-
+    <script>
+        function downloadFileFromBytes(fileName, byteArray) {
+            var blog = new Blog([new Uint8Array(byteArray)], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            var link = document.createElement('a');
+            link.href = window.URL.createObjectURL(blog);
+            link.download = fileName;
+            link.click();
+        }
+    </script>
 </body>
 
 </html>

@@ -1,12 +1,14 @@
 ﻿@page "/"
 
 @using System.Threading
+@using ClosedXML.Excel
 @using SimpleCRUD.Enum
 @using SimpleCRUD.ViewModels
 @using SimpleCRUD.Services
 @inject EmployeeService EmployeeService
 @inject IDialogService DialogService
 @inject ISnackbar SnackBar
+@inject IJSRuntime JS
 
 @rendermode InteractiveServer
 <PageTitle>Home</PageTitle>
@@ -15,7 +17,7 @@
     Employee Management System
 </h2>
 
-<MudDataGrid @ref="dataGrid" T="EmployeeViewModel" MultiSelection="true" Items="@EmployeeViewModel" SortMode="SortMode.Multiple" Filterable="true" QuickFilter="@_quickFilter"
+<MudDataGrid @ref="dataGrid" T="EmployeeViewModel" MultiSelection="true" Items="@EmployeeViewModel" SortMode="SortMode.Multiple" Filterable="false" QuickFilter="@_quickFilter"
              Hideable="true" RowClick="@RowClicked" RowContextMenuClick="RowRightClicked" SelectedItemsChanged="@SelectedItemsChanged">
     <ToolBarContent>
 
@@ -26,6 +28,34 @@
                    Color="Color.Primary">
             Add New Employee
         </MudButton>
+        <MudFileUpload Class="me-2" T="IBrowserFile" @ref="excelUpload" FilesChanged="UploadFile">
+            <ActivatorContent>
+                <MudButton Disabled="@importing" Variant="Variant.Filled" Color="Color.Success" StartIcon="@Icons.Custom.FileFormats.FileExcel">
+                    @if (importing)
+                    {
+                        <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true"></MudProgressCircular>
+                        <MudText Class="ms-2">Processing..</MudText>
+                    }
+                    else
+                    {
+                        <MudText>Importh Excell</MudText>
+                    }
+                </MudButton>
+            </ActivatorContent>
+        </MudFileUpload>
+
+        <MudButton Disabled="@exporting" @onclick="ExportToExcel" Variant="Variant.Filled" Color="Color.Info" StartIcon="@Icons.Custom.FileFormats.FileExcel">
+            @if (exporting)
+            {
+                <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true"></MudProgressCircular>
+                <MudText Class="ms-2">Processing..</MudText>
+            }
+            else
+            {
+                <MudText>Export Excell</MudText>
+            }
+        </MudButton>
+
         <MudSpacer />
         <MudTextField @bind-Value="_searchString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
                       AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
@@ -85,8 +115,11 @@
 
 @code {
     private IEnumerable<EmployeeViewModel> EmployeeViewModel = new List<EmployeeViewModel>();
-    MudDataGrid<EmployeeViewModel>? dataGrid;
+    MudDataGrid<EmployeeViewModel> dataGrid;
+    MudFileUpload<IBrowserFile> excelUpload;
     private string _searchString;
+    bool importing = false;
+    bool exporting = false;
     private bool _sortNameByLength;
     private List<string> _events = new();
 
@@ -194,4 +227,67 @@
         }
 
     }
+
+    private async Task UploadFile(IBrowserFile file)
+    {
+        if (file is null) return;
+        importing = true;
+        try
+        {
+
+            using var stream = new MemoryStream();
+            await file.OpenReadStream().CopyToAsync(stream);
+
+            stream.Position = 0;
+
+            using var workbook = new XLWorkbook(stream);
+            var worksheet = workbook.Worksheets.First();
+
+            var rows = worksheet.RowsUsed().Skip(1);
+
+            List<EmployeeViewModel> employees = new List<EmployeeViewModel>();
+            foreach (var row in rows)
+            {
+                EmployeeViewModel employeeViewModel = new EmployeeViewModel
+                    {
+                        FullName = row.Cell(1).Value.ToString(),
+                        Department = row.Cell(2).Value.ToString(),
+                        DateOfBirth = row.Cell(3).Value,
+                        Age = int.Parse(row.Cell(4).Value.ToString()),
+                        PhoneNumber = row.Cell(5).Value.ToString()
+
+                    };
+                employees.Add(employeeViewModel);
+            }
+
+            var parameters = new DialogParameters<ImportDialog>
+        {
+            { x => x.employees, employees}
+        };
+
+            var options = new DialogOptions() { MaxWidth = MaxWidth.Large };
+
+            var dialog = await DialogService.ShowAsync<ImportDialog>("Ready to import", parameters, options);
+            var result = await dialog.Result;
+
+            if(result!=null && !result.Canceled)
+            {
+                await dataGrid.ReloadServerData();
+            }
+        }
+        catch(Exception ex)
+        {
+
+        }
+        await excelUpload.ClearAsync();
+        importing = false;
+    }
+    private async Task ExportToExcel()
+    {
+        exporting = true;
+        var excelBytes = await EmployeeService.ExporttoExcel();
+        await JS.InvokeVoidAsync("downloadFileFromBytes", "List employess.xlsx", excelBytes);
+        exporting = false;
+    }
+
 }
