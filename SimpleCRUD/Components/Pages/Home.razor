@@ -1,10 +1,12 @@
 ﻿@page "/"
 
 @using System.Threading
+@using SimpleCRUD.Enum
 @using SimpleCRUD.ViewModels
 @using SimpleCRUD.Services
 @inject EmployeeService EmployeeService
 @inject IDialogService DialogService
+@inject ISnackbar SnackBar
 
 @rendermode InteractiveServer
 <PageTitle>Home</PageTitle>
@@ -44,12 +46,12 @@
                            StartIcon="@Icons.Material.Filled.Edit"
                            Color="@Color.Warning"
                            OnClick="@(() => this.UpdateEmployee(context))">
-                           Update
+                    Update
                 </MudButton>
                 <MudButton Size="@Size.Small"
                            Variant="Variant.Filled"
                            StartIcon="@Icons.Material.Filled.Delete"
-                           Color="@Color.Warning"
+                           Color="@Color.Error"
                            OnClick="@(() => this.RemoveEmployee(context))">
                     Remove
                 </MudButton>
@@ -108,15 +110,7 @@
 
         return false;
     };
-    private async Task CreateNewUser()
-    {
-        var options = new DialogOptions { MaxWidth = MaxWidth.Large };
 
-        var dialog = await DialogService.ShowAsync<CreateorUpdateEmployee>("Add Employee", options);
-        var result = await dialog.Result;
-        if (result is not null && !result.Canceled)
-            await dataGrid.ReloadServerData();
-    }
     protected override async Task OnInitializedAsync()
     {
         EmployeeViewModel = await EmployeeService.GetAllEmployees();
@@ -136,5 +130,68 @@
     {
         _events.Insert(0, $"Event = SelectedItemsChanged, Data = {System.Text.Json.JsonSerializer.Serialize(items)}");
     }
+    private async Task CreateNewUser()
+    {
+        var options = new DialogOptions { MaxWidth = MaxWidth.Large };
 
+        var parameters = new DialogParameters<CreateorUpdateEmployee>
+        {
+            {x=> x.Action, UIActionEnum.Insert},
+            {x=>x.model, new EmployeeViewModel() }
+        };
+
+        var dialog = await DialogService.ShowAsync<CreateorUpdateEmployee>("Add Employee", parameters, options);
+        var result = await dialog.Result;
+
+        if (result is not null && !result.Canceled)
+            await dataGrid.ReloadServerData();
+    }
+    private async Task UpdateEmployee(CellContext<EmployeeViewModel> employee)
+    {
+        var employeeView = EmployeeService.FindEmployee(employee.Item.EmployeeId);
+        if (employeeView is null)
+        {
+            SnackBar.Add("Something wrong when try find the employee!", Severity.Error);
+            return;
+        }
+
+        var options = new DialogOptions { MaxWidth = MaxWidth.Large };
+
+        var parameters = new DialogParameters<CreateorUpdateEmployee>
+        {
+            {x=> x.Action, UIActionEnum.Update},
+            {x=>x.model, employeeView },
+            {x=>x._date, employeeView.DateOfBirth }
+        };
+
+        var dialog = await DialogService.ShowAsync<CreateorUpdateEmployee>("Update Employee", parameters, options);
+        var result = await dialog.Result;
+
+        if (result is not null && !result.Canceled)
+            await dataGrid.ReloadServerData();
+    }
+    private async Task RemoveEmployee(CellContext<EmployeeViewModel> employee)
+    {
+        var dialog = await DialogService.ShowAsync<RemoveConfirmationDialog>("Remove: " + employee.Item.FullName);
+        var result = await dialog.Result;
+
+        if(result is not null && !result.Canceled)
+        {
+            var confirmed = (bool)(result.Data ?? false);
+            if (confirmed)
+            {
+                var deleteResult = EmployeeService.DeleteEmployee(employee.Item.EmployeeId);
+                if (deleteResult)
+                {
+                    SnackBar.Add("Successfully remove the employee!", Severity.Success);
+                    await dataGrid.ReloadServerData();
+                }
+                else
+                {
+                    SnackBar.Add("Failed remove the employee!", Severity.Error);
+                }
+            }
+        }
+
+    }
 }

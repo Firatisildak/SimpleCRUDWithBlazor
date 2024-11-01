@@ -1,0 +1,25 @@
+﻿<MudDialog>
+    <DialogContent>
+        <MudText>Do you really want to delete this records? This process cannot be undone.</MudText>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton OnClick="ConfirmDelete" Color="@Color.Error" Variant="Variant.Filled">Delete</MudButton>
+    </DialogActions>
+</MudDialog>
+
+
+@code{
+
+    [CascadingParameter]
+    private MudDialogInstance MudDialog { get; set; }
+
+    private void ConfirmDelete()
+    {
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+}
