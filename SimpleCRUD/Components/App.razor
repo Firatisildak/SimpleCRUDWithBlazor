@@ -20,13 +20,14 @@
     <script src="_content/MudBlazor/MudBlazor.min.js"></script>
     <script>
         function downloadFileFromBytes(fileName, byteArray) {
-            var blog = new Blog([new Uint8Array(byteArray)], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            var blob = new Blob([new Uint8Array(byteArray)], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
             var link = document.createElement('a');
-            link.href = window.URL.createObjectURL(blog);
+            link.href = window.URL.createObjectURL(blob);
             link.download = fileName;
             link.click();
         }
     </script>
+
 </body>
 
 </html>
