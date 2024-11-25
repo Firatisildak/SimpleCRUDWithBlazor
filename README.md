@@ -51,7 +51,3 @@ Uygulama içindeki sabitleri tanımlar.
 4. **Çalışan ID Formatı**:
    - `EmployeeId` özelliği, `EMPXXXX` formatında gösterilir.
 
----
-
-## Proje Kodları (Code Snippets)
-
